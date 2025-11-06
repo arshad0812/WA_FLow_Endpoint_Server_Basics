@@ -17,9 +17,42 @@ app.use(
 );
 
 const { APP_SECRET, PASSPHRASE = "", PORT = "3000" } = process.env;
-
 const PRIVATE_KEY = fs.readFileSync("private_key_pkcs8.pem", "utf8");
 
+
+// --- Your Verify Token ---
+const VERIFY_TOKEN = "dahsrA*0812"; // change this to any secret phrase
+
+// Webhook verification (GET)
+app.get("/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode && token) {
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      console.log("Webhook verified ✅");
+      res.status(200).send(challenge);
+    } else {
+      res.sendStatus(403);
+    }
+  }
+});
+
+// Webhook message receiver (POST)
+app.get("/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode === "subscribe" && token === process.env.WEBHOOK_VERIFY_TOKEN) {
+    console.log("✅ Webhook verified successfully!");
+    res.status(200).send(challenge);
+  } else {
+    console.log("❌ Verification failed");
+    res.sendStatus(403);
+  }
+});
 
 
 
@@ -40,23 +73,81 @@ app.post("/", async (req, res) => {
   console.log("💬 Full Decrypted Request Payload:");
   console.log(JSON.stringify(decryptedBody, null, 2));
 
-  // ✅ Extract user input
-  const userInput = decryptedBody?.data?.user_input;
-  if (userInput) {
-    console.log("📝 User Input Values:");
-    Object.entries(userInput).forEach(([key, value]) => {
-      console.log(`➡️ ${key}: ${value}`);
-    });
-  } else {
-    console.log("⚠️ No user_input found in decryptedBody");
+  const action = decryptedBody?.action?.toLowerCase?.() || "unknown";
+  console.log(`🟡 Incoming Action: ${action}`);
+
+  let response;
+
+  try {
+    switch (action) {
+      case "init":
+        console.log("⚙️ INIT request received");
+        if (decryptedBody.flow_token) {
+          console.log("🚀 Starting Flow — returning SCREEN_ONE");
+          response = {
+            screen: "SCREEN_ONE",
+            data: {},
+          };
+        } else {
+          console.log("🩺 Health check INIT — returning active");
+          response = { data: { status: "active" } };
+        }
+        break;
+
+      case "ping":
+        console.log("📡 Ping received — replying with status active");
+        response = { data: { status: "active" } };
+        break;
+
+      case "data_exchange":
+        console.log("🔄 Data exchange received:");
+        const dataExchange = decryptedBody?.data || {};
+
+        // ✅ FORM DATA comes here when user submits the form
+        const formData = dataExchange.form_data || {};
+        const userInput = dataExchange.user_input || {}; // sometimes Meta sends user_input too
+
+        if (Object.keys(formData).length > 0) {
+          console.log("🧾 FORM DATA VALUES:");
+          Object.entries(formData).forEach(([key, value]) => {
+            console.log(`➡️ ${key}: ${value}`);
+          });
+        } else if (Object.keys(userInput).length > 0) {
+          console.log("📝 USER INPUT VALUES:");
+          Object.entries(userInput).forEach(([key, value]) => {
+            console.log(`➡️ ${key}: ${value}`);
+          });
+        } else {
+          console.log("⚠️ No form_data or user_input found.");
+        }
+
+        // Example: extract individual fields
+        const name = formData.name || userInput.name;
+         const phone = formData.number || userInput.number;
+        const query = formData.query || userInput.query;
+
+        console.log("👤 Extracted Values:", { name, phone, query });
+
+        response = {
+          action: "complete",
+          screen: "CONFIRM_SCREEN",
+          data: {
+            success: true,
+            message: `Form submitted successfully for ${name || "Unknown"}!`,
+          },
+        };
+        break;
+
+      default:
+        console.warn(`⚠️ Unknown action: ${action}`);
+        response = { error: "Unknown action" };
+    }
+  } catch (err) {
+    console.error("❌ Error processing action:", err);
+    response = { error: "Internal server error" };
   }
 
-  
-
-  // Generate flow response
-  const response = await getNextScreen(decryptedBody);
-  console.log("👉 Response to Encrypt:", response);
-
+  console.log("👉 Response to Encrypt:", JSON.stringify(response, null, 2));
   res.send(encryptResponse(response, aesKeyBuffer, initialVectorBuffer));
 });
 
@@ -66,7 +157,7 @@ POST / to test your flow requests.</pre>`);
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server is listening on port ${PORT}`);
+  console.log(`✅ Flow endpoint running on port ${PORT}`);
 });
 
 function isRequestSignatureValid(req) {
@@ -92,5 +183,3 @@ function isRequestSignatureValid(req) {
   }
   return true;
 }
-
-

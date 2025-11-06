@@ -1,51 +1,27 @@
 export const getNextScreen = async (decryptedBody) => {
-  const { screen, data, action } = decryptedBody;
+  const { action, screen, data } = decryptedBody;
 
-  // 🟢 Meta Health Check
-  if (action === "ping") {
-    return { data: { status: "active" } };
+  switch (action) {
+    case "ping":
+      return { data: { status: "active" } };
+
+    case "INIT":
+      return { screen: "SCREEN_ONE", data: {} };
+
+    case "data_exchange":
+      console.log("📡 Data exchange received:", data);
+      return { screen, data: { updated: true } };
+
+    case "navigate":
+      console.log("➡️ Navigating to next screen");
+      return { screen: "SCREEN_TWO", data: {} };
+
+    case "complete":
+      console.log("✅ Flow completed. User data:", data);
+      return { action: "complete", data: { success: true } };
+
+    default:
+      console.error("⚠️ Unknown action:", action);
+      throw new Error("Unhandled action type");
   }
-
-  // 🟢 Start of flow
-  if (action === "INIT") {
-    console.log("👉 INIT received");
-
-    return {
-      screen: "SCREEN_ONE",
-      data: {
-        all_extras: [
-          { id: "1", title: "Fries 🍟" },
-          { id: "2", title: "Coleslaw 🥗" },
-          { id: "3", title: "Coke 🥤" }
-        ]
-      }
-    };
-  }
-
-  // 🟢 Handle form submission (Submit button click)
-  if (action === "complete" && screen === "SCREEN_ONE") {
-    const selectedExtras = data?.extras || [];
-
-    console.log("📥 User selected extras:", selectedExtras);
-
-    const confirmationMessage =
-      selectedExtras.length > 0
-        ? `✅ You selected: ${selectedExtras
-            .map((e) =>
-              e === "1" ? "Fries 🍟" : e === "2" ? "Coleslaw 🥗" : "Coke 🥤"
-            )
-            .join(", ")}`
-        : "⚠️ You didn’t select any extras.";
-
-    return {
-      screen: "CONFIRM_SCREEN",
-      data: {
-        confirmation_message: confirmationMessage
-      }
-    };
-  }
-
-  // 🟠 Unhandled cases
-  console.error("⚠️ Unhandled flow request:", decryptedBody);
-  throw new Error("Unhandled request in flow.js");
 };
