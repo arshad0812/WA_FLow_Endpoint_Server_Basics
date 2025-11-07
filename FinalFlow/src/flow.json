@@ -1,0 +1,153 @@
+{
+    "data_api_version": "3.0",
+    "version": "9.1",
+    "routing_model": {
+        "SCREEN_ONE": [
+            "THANK_YOU_SCREEN"
+        ],
+        "THANK_YOU_SCREEN": []
+    },
+    "screens": [
+        {
+            "id": "SCREEN_ONE",
+            "title": "Welcome to Vleafy Technologies",
+            "terminal": false,
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextHeading",
+                        "text": "Fill the form to get started"
+                    },
+                    {
+                        "type": "Form",
+                        "name": "user_form",
+                        "children": [
+                            {
+                                "type": "TextInput",
+                                "name": "name",
+                                "label": "Enter your name",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "name": "phone",
+                                "label": "Enter your number",
+                                "input_type": "tel",
+                                "required": true
+                            },
+                            {
+                                "type": "TextArea",
+                                "name": "business",
+                                "label": "Describe your business (0–600 chars)",
+                                "max_length": 600,
+                                "required": true
+                            },
+                            {
+                                "type": "Dropdown",
+                                "name": "country",
+                                "label": "Select your country",
+                                "data_source": {
+                                    "type": "static",
+                                    "values": [
+                                        {
+                                            "id": "india",
+                                            "title": "India"
+                                        },
+                                        {
+                                            "id": "usa",
+                                            "title": "United States"
+                                        },
+                                        {
+                                            "id": "uk",
+                                            "title": "United Kingdom"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Dropdown",
+                                "name": "state",
+                                "label": "Select your state",
+                                "data_source": {
+                                    "type": "static",
+                                    "values": [
+                                        {
+                                            "id": "tn",
+                                            "title": "Tamil Nadu"
+                                        },
+                                        {
+                                            "id": "kl",
+                                            "title": "Kerala"
+                                        },
+                                        {
+                                            "id": "mh",
+                                            "title": "Maharashtra"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "CheckboxGroup",
+                                "name": "services",
+                                "label": "Choose required services",
+                                "data_source": {
+                                    "type": "static",
+                                    "values": [
+                                        {
+                                            "id": "seo",
+                                            "title": "SEO"
+                                        },
+                                        {
+                                            "id": "sem",
+                                            "title": "SEM"
+                                        },
+                                        {
+                                            "id": "ai_automation",
+                                            "title": "AI Automation"
+                                        },
+                                        {
+                                            "id": "rcs_message",
+                                            "title": "RCS Message"
+                                        },
+                                        {
+                                            "id": "website_dev",
+                                            "title": "Website Development"
+                                        },
+                                        {
+                                            "id": "wa_chatbot",
+                                            "title": "WhatsApp Chatbot"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "label": "Submit",
+                                "on_click_action": {
+                                    "name": "navigate",
+                                    "next": "THANK_YOU_SCREEN"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "THANK_YOU_SCREEN",
+            "title": "Thank You!",
+            "terminal": true,
+            "success": true,
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextBody",
+                        "text": "Your details have been submitted successfully! Our team will reach out to you soon."
+                    }
+                ]
+            }
+        }
+    ]
+}
