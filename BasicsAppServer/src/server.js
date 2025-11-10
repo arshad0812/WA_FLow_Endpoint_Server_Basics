@@ -61,78 +61,111 @@ app.post("/", async (req, res) => {
   let response;
 
   try {
-    switch (action) {
-      case "init":
-        console.log("⚙️ INIT request received");
-        response = {
-          screen: "COUNTRY_SELECTION",
-          data: {
-            country: [
-              { id: "India", title: "India" },
-              { id: "USA", title: "USA" }
-            ],
-            state: [],
-            is_state_enabled: false
-          }
-        };
-        break;
+    /* 1️⃣ INIT — user opens the flow */
+    if (action === "init") {
+      console.log("⚙️ INIT request received");
+      response = {
+        screen: "COUNTRY_SELECTION",
+        data: {
+          service: [
+            { id: "1", title: "Search Engine Optimization" },
+            { id: "2", title: "Social Media Marketing" },
+            { id: "3", title: "Paid Ads" },
+            { id: "4", title: "Whatsapp Chatbot" },
+            { id: "5", title: "RCS Messages" },
+            { id: "6", title: "AI Automation" },
+          ],
+          businesstype: [
+            { "id": "startup", "title": "Startup" },
+            { "id": "small_business", "title": "Small Business" },
+            { "id": "medium_enterprise", "title": "Medium Enterprise" },
+            { "id": "ecommerce_brand", "title": "E-commerce Brand" },
+            { "id": "personal_brand", "title": "Personal Brand / Influencer" },
+            { "id": "agency", "title": "Digital Marketing Agency" },
+            { "id": "local_business", "title": "Local Business / Store" },
+            { "id": "ngo", "title": "Non-Profit / NGO" },
+            { "id": "manufacturer", "title": "Manufacturer / Distributor" },
+            { "id": "freelancer", "title": "Freelancer / Consultant" }
+          ],
+          country: [
+            { id: "India", title: "India" },
+            { id: "USA", title: "USA" },
+          ],
+          state: [],
+          is_state_enabled: false,
+        },
+      };
+    }
 
-      case "ping":
-        console.log("📡 Ping received — replying with status active");
-        response = { data: { status: "active" } };
-        break;
+    /* 2️⃣ data_exchange — dynamic country → state loading */
+    else if (action === "data_exchange" && decryptedBody?.data?.country) {
+      const selectedCountry = decryptedBody.data.country;
+      console.log("🌍 Selected country:", selectedCountry);
 
-      case "data_exchange":
-        console.log("🔄 Data exchange received:");
-        const dataExchange = decryptedBody?.data || {};
-        const selectedCountry = dataExchange?.country;
-         const selectedState = dataExchange?.state;
-        console.log("🌍 Selected country:", selectedCountry);
+      let states = [];
+      if (selectedCountry === "India") {
+        states = [
+          { id: "tamilnadu", title: "Tamil Nadu" },
+          { id: "kerala", title: "Kerala" },
+          { id: "maharashtra", title: "Maharashtra" },
+        ];
+      } else if (selectedCountry === "USA") {
+        states = [
+          { id: "california", title: "California" },
+          { id: "texas", title: "Texas" },
+        ];
+      }
 
-        let states = [];
-        let isStateEnabled = false;
+      response = {
+        screen: "COUNTRY_SELECTION",
+        data: {
+          state: states,
+          is_state_enabled: true,
+        },
+      };
+    }
 
-        if (selectedCountry === "India") {
-          states = [
-            { id: "tamilnadu", title: "Tamil Nadu" },
-            { id: "kerala", title: "Kerala" },
-            { id: "maharashtra", title: "Maharashtra" }
-          ];
-          isStateEnabled = true;
-        } else if (selectedCountry === "USA") {
-          states = [
-            { id: "california", title: "California" },
-            { id: "texas", title: "Texas" },
-            { id: "florida", title: "Florida" }
-          ];
-          isStateEnabled = true;
-        }
+    /* 3️⃣ Continue button → move to CONFIRM_SCREEN */
+    else if (
+      action === "data_exchange" &&
+      decryptedBody?.data?.next === "CONFIRM_SCREEN"
+    ) {
+      console.log("📋 Form submitted:");
+      console.log(JSON.stringify(decryptedBody.data.form, null, 2));
 
-        response = {
-          screen: "COUNTRY_SELECTION", // 👈 required
-          data: {
-            state: states,
-            is_state_enabled: isStateEnabled
-          }
-        };
-        break;
+      // Optionally save form data here (to DB / JSON file)
 
-      case "complete":
-        console.log("🟢 COMPLETE request received");
+      response = {
+        screen: "CONFIRM_SCREEN",
+        data: {},
+      };
+    }
 
-        const completeData = decryptedBody?.data || {};
-        const country = completeData?.country || "Unknown Country";
-        const state = completeData?.state || "Unknown State";
+    /* 4️⃣ Finish button → flow complete */
+    else if (action === "data_exchange" && decryptedBody?.data?.complete) {
+      console.log("✅ Flow completion triggered");
 
-        // Respond with "type": "complete"
-        response = {
-          type: "complete",
-        };
-        break;
+      response = {
+        screen: "SUCCESS",
+        data: {
+          extension_message_response: {
+            params: {
+              flow_token: decryptedBody.flow_token || "demo_flow_token",
+              status: "completed",
+              message: "Lead form successfully submitted",
+            },
+          },
+        },
+      };
+    }
 
-      default:
-        console.warn(`⚠️ Unknown action: ${action}`);
-        response = { error: "Unknown action" };
+    /* 5️⃣ Default fallback */
+    else {
+      console.warn("⚠️ Unknown or unhandled action received");
+      response = {
+        screen: "COUNTRY_SELECTION",
+        data: {},
+      };
     }
   } catch (err) {
     console.error("❌ Error processing action:", err);
@@ -141,7 +174,6 @@ app.post("/", async (req, res) => {
 
   console.log("👉 Encrypted Response being sent:");
   console.log(JSON.stringify(response, null, 2));
-
   res.send(encryptResponse(response, aesKeyBuffer, initialVectorBuffer));
 });
 
