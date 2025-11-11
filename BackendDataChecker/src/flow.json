@@ -1,0 +1,139 @@
+{
+    "version": "7.2",
+    "data_api_version": "3.0",
+    "routing_model": {
+        "SCREEN_ONE": [
+            "SCREEN_TWO"
+        ],
+        "SCREEN_TWO": [
+            "CONFIRM_SCREEN"
+        ],
+        "CONFIRM_SCREEN": []
+    },
+    "screens": [
+        {
+            "id": "SCREEN_ONE",
+            "title": "User Info",
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "user_form",
+                        "children": [
+                            {
+                                "type": "TextInput",
+                                "label": "Full Name",
+                                "name": "name",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Email",
+                                "name": "mail",
+                                "input-type": "email",
+                                "helper-text": "Enter a valid email",
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "action": "check_user",
+                                        "next": "SCREEN_TWO",
+                                        "form": "${form}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "SCREEN_TWO",
+            "title": "Additional Details",
+            "data": {
+                "init_values": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string"
+                        },
+                        "business": {
+                            "type": "string"
+                        }
+                    },
+                    "__example__": {
+                        "city": "Chennai",
+                        "business": "Startup"
+                    }
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "details_form",
+                        "init-values": {
+                            "city": "${data.init_values.city}",
+                            "business": "${data.init_values.business}"
+                        },
+                        "children": [
+                            {
+                                "type": "TextInput",
+                                "label": "name",
+                                "visible": false
+        "name": "name"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "mail",
+                                "visible": false
+        "name": "mail"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "City",
+                                "name": "city"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Business Type",
+                                "name": "business"
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Submit",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "next": "CONFIRM_SCREEN",
+                                        "form": "${form}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "CONFIRM_SCREEN",
+            "title": "Thank You!",
+            "terminal": true,
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextBody",
+                        "text": "Thanks for submitting your details! Our team will reach out soon."
+                    }
+                ]
+            }
+        }
+    ]
+}
