@@ -1,3 +1,9 @@
+/**
+ * WhatsApp Flow Endpoint — Vleafy Appointment Booking
+ * Author: Arshad
+ * Version: 2.0
+ */
+
 import express from "express";
 import { decryptRequest, encryptResponse, FlowEndpointException } from "./encryption.js";
 import crypto from "crypto";
@@ -8,6 +14,7 @@ dotenv.config();
 
 const app = express();
 
+/* ------------------- EXPRESS CONFIG ------------------- */
 app.use(
   express.json({
     verify: (req, res, buf, encoding) => {
@@ -16,11 +23,15 @@ app.use(
   })
 );
 
+/* ------------------- ENV VARIABLES ------------------- */
 const { APP_SECRET, PASSPHRASE = "", PORT = "3000" } = process.env;
 const PRIVATE_KEY = fs.readFileSync("private_key_pkcs8.pem", "utf8");
 const VERIFY_TOKEN = "dahsrA*0812";
+const WEBHOOK_URL = "https://webhooksapp.vleafy.com/webhook/679cafd2746dcfd84f580cb2";
 
-/* ------------------- WEBHOOK VERIFICATION ------------------- */
+global.lastFormData = {};
+
+/* ------------------- VERIFY WEBHOOK ------------------- */
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -28,14 +39,13 @@ app.get("/webhook", (req, res) => {
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
     console.log("✅ Webhook verified successfully!");
-    res.status(200).send(challenge);
-  } else {
-    console.log("❌ Verification failed");
-    res.sendStatus(403);
+    return res.status(200).send(challenge);
   }
+
+  console.log("❌ Webhook verification failed");
+  res.sendStatus(403);
 });
 
-global.lastFormData = {};
 /* ------------------- MAIN FLOW ENDPOINT ------------------- */
 app.post("/", async (req, res) => {
   if (!isRequestSignatureValid(req)) return res.status(432).send();
@@ -59,83 +69,76 @@ app.post("/", async (req, res) => {
   const action = decryptedBody?.action?.toLowerCase?.() || "unknown";
   console.log(`🟡 Incoming Action: ${action}`);
 
-  let response;
+  let response = {};
 
   try {
     /* 1️⃣ INIT — user opens the flow */
     if (action === "init") {
       console.log("⚙️ INIT request received");
+
       response = {
-        screen: "COUNTRY_SELECTION",
+        screen: "APPOINTMENT_FORM",
         data: {
-          service: [
-            { id: "1", title: "Search Engine Optimization" },
-            { id: "2", title: "Social Media Marketing" },
-            { id: "3", title: "Paid Ads" },
-            { id: "4", title: "Whatsapp Chatbot" },
-            { id: "5", title: "RCS Messages" },
-            { id: "6", title: "AI Automation" },
+          departments: [
+            { id: "cardiology", title: "Cardiology" },
+            { id: "dermatology", title: "Dermatology" },
+            { id: "neurology", title: "Neurology" },
+            { id: "orthopedics", title: "Orthopedics" },
+          ],
+          doctors: [
+            { id: "dr_smith", title: "Dr. Smith" },
+            { id: "dr_john", title: "Dr. John" },
+            { id: "dr_clara", title: "Dr. Clara" },
+            { id: "dr_rohit", title: "Dr. Rohit" },
           ],
           businesstype: [
-            { "id": "startup", "title": "Startup" },
-            { "id": "small_business", "title": "Small Business" },
-            { "id": "medium_enterprise", "title": "Medium Enterprise" },
-            { "id": "ecommerce_brand", "title": "E-commerce Brand" },
-            { "id": "personal_brand", "title": "Personal Brand / Influencer" },
-            { "id": "agency", "title": "Digital Marketing Agency" },
-            { "id": "local_business", "title": "Local Business / Store" },
-            { "id": "ngo", "title": "Non-Profit / NGO" },
-            { "id": "manufacturer", "title": "Manufacturer / Distributor" },
-            { "id": "freelancer", "title": "Freelancer / Consultant" }
+            { id: "startup", title: "Startup" },
+            { id: "small_business", title: "Small Business" },
+            { id: "medium_enterprise", title: "Medium Enterprise" },
+            { id: "ecommerce_brand", title: "E-commerce Brand" },
+            { id: "personal_brand", title: "Personal Brand / Influencer" },
+            { id: "agency", title: "Digital Marketing Agency" },
+            { id: "local_business", title: "Local Business / Store" },
+            { id: "ngo", title: "Non-Profit / NGO" },
+            { id: "manufacturer", title: "Manufacturer / Distributor" },
+            { id: "freelancer", title: "Freelancer / Consultant" },
           ],
-          country: [
-            { id: "India", title: "India" },
-            { id: "USA", title: "USA" },
-          ],
-          state: [],
-          is_state_enabled: false,
+          is_doctor_enabled: false,
         },
       };
     }
 
-    /* 2️⃣ data_exchange — dynamic country → state loading */
-    else if (action === "data_exchange" && decryptedBody?.data?.country) {
-      const selectedCountry = decryptedBody.data.country;
-      console.log("🌍 Selected country:", selectedCountry);
+    /* 2️⃣ Department Selection → Enable Doctor Dropdown */
+    else if (action === "data_exchange" && decryptedBody?.data?.department) {
+      const department = decryptedBody.data.department;
+      console.log("🏥 Department selected:", department);
 
-      let states = [];
-      if (selectedCountry === "India") {
-        states = [
-          { id: "tamilnadu", title: "Tamil Nadu" },
-          { id: "kerala", title: "Kerala" },
-          { id: "maharashtra", title: "Maharashtra" },
-        ];
-      } else if (selectedCountry === "USA") {
-        states = [
-          { id: "california", title: "California" },
-          { id: "texas", title: "Texas" },
-        ];
-      }
+      // In a real project, you could filter doctors by department here
+      const doctorList = [
+        { id: "dr_smith", title: "Dr. Smith" },
+        { id: "dr_john", title: "Dr. John" },
+        { id: "dr_clara", title: "Dr. Clara" },
+        { id: "dr_rohit", title: "Dr. Rohit" },
+      ];
 
       response = {
-        screen: "COUNTRY_SELECTION",
+        screen: "APPOINTMENT_FORM",
         data: {
-          state: states,
-          is_state_enabled: true,
+          doctors: doctorList,
+          is_doctor_enabled: true,
         },
       };
     }
 
-    /* 3️⃣ Continue button → move to CONFIRM_SCREEN */
+    /* 3️⃣ Continue → Confirm Screen */
     else if (
       action === "data_exchange" &&
       decryptedBody?.data?.next === "CONFIRM_SCREEN"
     ) {
-      console.log("📋 Form submitted:");
+      console.log("📋 Appointment Form Submitted:");
       console.log(JSON.stringify(decryptedBody.data.form, null, 2));
 
       global.lastFormData = decryptedBody.data.form;
-      // Optionally save form data here (to DB / JSON file)
 
       response = {
         screen: "CONFIRM_SCREEN",
@@ -143,7 +146,7 @@ app.post("/", async (req, res) => {
       };
     }
 
-    /* 4️⃣ Finish button → flow complete */
+    /* 4️⃣ Finish → Flow Complete */
     else if (action === "data_exchange" && decryptedBody?.data?.complete) {
       console.log("✅ Flow completion triggered");
 
@@ -152,35 +155,33 @@ app.post("/", async (req, res) => {
         data: {
           extension_message_response: {
             params: {
-              flow_token: decryptedBody.flow_token || "demo_flow_token",
+              flow_token: decryptedBody.flow_token || "demo_token",
               status: "completed",
-              message: "Lead form successfully submitted",
+              message: "Appointment successfully booked",
             },
           },
         },
       };
 
       try {
-        const webhookUrl = "https://webhooksapp.vleafy.com/webhook/691453111b9845c02d4b34bc";
-
-        // ✅ Use the globally stored form data
         const form = global.lastFormData || {};
-        console.log(form);
+        console.log("📦 Sending appointment details to webhook:", form);
 
-        const webhookResponse = await fetch(webhookUrl, {
+        const webhookResponse = await fetch(WEBHOOK_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.name || "",
-            email: form.mail || "",
             phone: form.number || "",
-            services: form.services || [],
-            businesstype: form.chips?.[0] || "",
-            country: form.country || "",
-            state: form.state || "",
-            date: form.date || "",
+            age: form.age || "",
+            gender: form.gender || "",
+            department: form.department || "",
+            doctor: form.doctor || "",
+            appointmentdate: form.appointmentdate || "",
+            time: form.time?.[0] || "",
+            symptoms: form.symptoms || "",
+            consultation_mode: form.consultationmode?.[0] || "",
+            status: "completed",
           }),
         });
 
@@ -189,20 +190,20 @@ app.post("/", async (req, res) => {
             `❌ Webhook failed: ${webhookResponse.status} ${webhookResponse.statusText}`
           );
         } else {
-          console.log("✅ Webhook sent successfully to Vleafy endpoint");
+          console.log("✅ Appointment data sent successfully to webhook endpoint");
         }
       } catch (err) {
         console.error("❌ Error sending webhook:", err);
       }
     }
 
-    /* 5️⃣ Default fallback */
+    /* 5️⃣ Fallback for Unknown Actions */
     else {
       console.warn("⚠️ Unknown or unhandled action received");
       response = {
-        screen: "COUNTRY_SELECTION",
+        screen: "APPOINTMENT_FORM",
         data: {
-          "status": "active"
+          status: "active",
         },
       };
     }
@@ -213,24 +214,20 @@ app.post("/", async (req, res) => {
 
   console.log("👉 Encrypted Response being sent:");
   console.log(JSON.stringify(response, null, 2));
+
   res.send(encryptResponse(response, aesKeyBuffer, initialVectorBuffer));
 });
 
 /* ------------------- ROOT ROUTE ------------------- */
 app.get("/", (req, res) => {
-  res.send(`<pre>✅ WhatsApp Flow endpoint is running.
-POST / to test your flow requests.</pre>`);
-});
-
-/* ------------------- SERVER LISTEN ------------------- */
-app.listen(PORT, () => {
-  console.log(`✅ Flow endpoint running on port ${PORT}`);
+  res.send(`<pre>✅ WhatsApp Appointment Flow endpoint is running.
+POST / to test flow actions.</pre>`);
 });
 
 /* ------------------- SIGNATURE VALIDATION ------------------- */
 function isRequestSignatureValid(req) {
   if (!APP_SECRET) {
-    console.warn("⚠️ App Secret not set. Add APP_SECRET in .env for signature validation.");
+    console.warn("⚠️ APP_SECRET not set — skipping signature validation (dev mode).");
     return true;
   }
 
@@ -240,15 +237,19 @@ function isRequestSignatureValid(req) {
     return false;
   }
 
-  const signatureBuffer = Buffer.from(signatureHeader.replace("sha256=", ""), "utf-8");
+  const signature = signatureHeader.replace("sha256=", "");
   const hmac = crypto.createHmac("sha256", APP_SECRET);
-  const digestString = hmac.update(req.rawBody).digest("hex");
-  const digestBuffer = Buffer.from(digestString, "utf-8");
+  const digest = hmac.update(req.rawBody).digest("hex");
 
-  if (!crypto.timingSafeEqual(digestBuffer, signatureBuffer)) {
-    console.error("❌ Error: Request signature mismatch");
+  if (!crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature))) {
+    console.error("❌ Signature mismatch");
     return false;
   }
 
   return true;
 }
+
+/* ------------------- SERVER LISTEN ------------------- */
+app.listen(PORT, () => {
+  console.log(`✅ Appointment Flow endpoint running on port ${PORT}`);
+});

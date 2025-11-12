@@ -45,7 +45,7 @@ const usersDB = [
 app.post("/", async (req, res) => {
   if (!isRequestSignatureValid(req)) return res.status(432).send();
 
-  const uuser={};
+  let uuser={};
   let decryptedRequest;
   try {
     decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
@@ -90,7 +90,7 @@ app.post("/", async (req, res) => {
           u.mail.toLowerCase() === mail.toLowerCase()
       );
 
-      const uuser=existingUser;
+      uuser=existingUser || {name,mail};
 
       let initData = {};
 
@@ -100,11 +100,7 @@ app.post("/", async (req, res) => {
           city: existingUser.city,
           business: existingUser.business,
         };
-      } else {
-        console.log("🆕 New user — no previous data");
-      }
-
-      response = {
+        response = {
         screen: "SCREEN_TWO",
         data: {
           init_values: {
@@ -115,6 +111,23 @@ app.post("/", async (req, res) => {
           }
         },
       };
+
+      } else {
+        console.log("🆕 New user — no previous data");
+        response = {
+        screen: "SCREEN_TWO",
+        data: {
+          init_values: {
+            name: "",
+            mail: "",
+            city:"",
+            business:""
+          }
+        },
+      };
+
+      }
+
     }
 
     /* 3️⃣ Continue to confirmation screen */
@@ -124,19 +137,19 @@ app.post("/", async (req, res) => {
 
       // Save or update user info here
       const formData = decryptedBody.data.form;
-      const existingIndex = usersDB.findIndex(
-        (u) =>
-          u.name.toLowerCase() === uuser.name.toLowerCase() &&
-          u.mail.toLowerCase() === uuser.mail.toLowerCase()
-      );
+      // const existingIndex = usersDB.findIndex(
+      //   (u) =>
+      //     u.name.toLowerCase() === uuser.name.toLowerCase() &&
+      //     u.mail.toLowerCase() === uuser.mail.toLowerCase()
+      // );
 
-      if (existingIndex >= 0) {
-        usersDB[existingIndex] = { ...usersDB[existingIndex], ...formData };
-        console.log("📝 Updated existing user record:", usersDB[existingIndex]);
-      } else {
-        usersDB.push(formData);
-        console.log("➕ Added new user record:", formData);
-      }
+      // if (existingIndex >= 0) {
+      //   usersDB[existingIndex] = { ...usersDB[existingIndex], ...formData };
+      //   console.log("📝 Updated existing user record:", usersDB[existingIndex]);
+      // } else {
+      //   usersDB.push(formData);
+      //   console.log("➕ Added new user record:", formData);
+      // }
 
       response = {
         screen: "CONFIRM_SCREEN",
