@@ -1,0 +1,299 @@
+{
+    "data_api_version": "3.0",
+    "version": "7.2",
+    "routing_model": {
+        "COUNTRY_SELECTION": [
+            "CONFIRM_SCREEN"
+        ],
+        "CONFIRM_SCREEN": []
+    },
+    "screens": [
+        {
+            "id": "COUNTRY_SELECTION",
+            "title": "Lead Form",
+            "terminal": false,
+            "data": {
+                "service": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "1",
+                            "title": "Search Engine Optimization"
+                        },
+                        {
+                            "id": "2",
+                            "title": "Social Media Marketing"
+                        },
+                        {
+                            "id": "3",
+                            "title": "Paid Ads"
+                        },
+                        {
+                            "id": "4",
+                            "title": "Whatsapp Chatbot"
+                        },
+                        {
+                            "id": "5",
+                            "title": "RCS Messages"
+                        },
+                        {
+                            "id": "6",
+                            "title": "AI Automation"
+                        }
+                    ]
+                },
+                "businesstype": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "startup",
+                            "title": "Startup"
+                        },
+                        {
+                            "id": "small_business",
+                            "title": "Small Business"
+                        },
+                        {
+                            "id": "medium_enterprise",
+                            "title": "Medium Enterprise"
+                        },
+                        {
+                            "id": "ecommerce_brand",
+                            "title": "E-commerce Brand"
+                        },
+                        {
+                            "id": "personal_brand",
+                            "title": "Personal Brand / Influencer"
+                        },
+                        {
+                            "id": "agency",
+                            "title": "Digital Marketing Agency"
+                        },
+                        {
+                            "id": "local_business",
+                            "title": "Local Business / Store"
+                        },
+                        {
+                            "id": "ngo",
+                            "title": "Non-Profit / NGO"
+                        },
+                        {
+                            "id": "manufacturer",
+                            "title": "Manufacturer / Distributor"
+                        },
+                        {
+                            "id": "freelancer",
+                            "title": "Freelancer / Consultant"
+                        }
+                    ]
+                },
+                "country": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "India",
+                            "title": "India"
+                        },
+                        {
+                            "id": "USA",
+                            "title": "USA"
+                        }
+                    ]
+                },
+                "state": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "tamilnadu",
+                            "title": "Tamil Nadu"
+                        },
+                        {
+                            "id": "kerala",
+                            "title": "Kerala"
+                        }
+                    ]
+                },
+                "is_state_enabled": {
+                    "type": "boolean",
+                    "__example__": false
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "lead_form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Business Lead Form"
+                            },
+                            {
+                                "type": "TextBody",
+                                "text": "Please fill this form to help us reach you quickly."
+                            },
+                            {
+                                "type": "Image",
+                                "src": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAALElEQVR4nGIRPRrBgATeWLsjc5kY8AKaSrPIL3FA5i9evZNudhOQBgQAAP//2DAFw06W30wAAAAASUVORK5CYII=",
+                                "width": 200,
+                                "height": 200
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Full Name",
+                                "name": "name",
+                                "input-type": "text",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Phone Number",
+                                "name": "number",
+                                "input-type": "number",
+                                "pattern": "^[0-9]{10}$",
+                                "helper-text": "Please enter a valid 10-digit number",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Email Address",
+                                "name": "mail",
+                                "input-type": "text",
+                                "pattern": "^[a-zA-Z0-9._%+-]+@gmail\\.com$",
+                                "helper-text": "Please enter a valid Gmail address",
+                                "required": true
+                            },
+                            {
+                                "type": "CheckboxGroup",
+                                "name": "services",
+                                "label": "Services",
+                                "description": "Choose required service",
+                                "data-source": "${data.service}",
+                                "required": true
+                            },
+                            {
+                                "type": "ChipsSelector",
+                                "name": "chips",
+                                "label": "Select the following",
+                                "description": "Choose your company to get a personlaized quote",
+                                "max-selected-items": 1,
+                                "data-source": "${data.businesstype}"
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "Country",
+                                "name": "country",
+                                "data-source": "${data.country}",
+                                "required": true,
+                                "on-select-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "country": "${form.country}"
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "State",
+                                "name": "state",
+                                "data-source": "${data.state}",
+                                "visible": "${data.is_state_enabled}"
+                            },
+                            {
+                                "type": "DatePicker",
+                                "label": "Select a Date",
+                                "name": "date"
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "next": "CONFIRM_SCREEN",
+                                        "form": "${form}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "CONFIRM_SCREEN",
+            "title": "Thank You!",
+            "terminal": true,
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "confirmation_form",
+                        "children": [
+                            {
+                                "type": "TextBody",
+                                "text": "Thanks for submitting your details! Our team will reach out soon."
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Finish",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "complete": true
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
